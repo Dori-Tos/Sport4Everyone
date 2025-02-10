@@ -47,7 +47,7 @@ export default function TabLayout() {
           name="contacts"
           options={{
             title: 'Contacts',
-            tabBarIcon: ({ color }) => <IconSymbol size={28} name="people.fill" color={color} />,
+            tabBarIcon: ({ color }) => <IconSymbol size={28} name="people" color={color} />,
           }}
         />
       </Tabs>

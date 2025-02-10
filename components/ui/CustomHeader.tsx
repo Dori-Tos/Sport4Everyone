@@ -1,5 +1,5 @@
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { IconSymbol } from './IconSymbol';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -11,7 +11,7 @@ export default function CustomHeader() {
   return (
     <View style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
       <TouchableOpacity onPress={() => navigation.navigate('account')} style={styles.accountButton}>
-        <IconSymbol name="person.fill" size={28} color={Colors[colorScheme ?? 'light'].tint} />
+        <IconSymbol name="person" size={28} color={Colors[colorScheme ?? 'light'].tint} />
       </TouchableOpacity>
     </View>
   );

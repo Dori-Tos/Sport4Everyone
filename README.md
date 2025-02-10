@@ -1,50 +1,53 @@
-# Welcome to your Expo app 👋
+# Welcome to Sport4Everyone 👋
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
-## Get started
+## Using this app
 
-1. Install dependencies
+### 1. Install dependencies
+
+To install the necessary dependencies, run the following command:
 
    ```bash
    npm install
    ```
 
-2. Start the app
+### 2. Start the app
+
+To start the app, run:
 
    ```bash
-    npx expo start
+   npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+## App Goals
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+1. **Booking Sports Fields**
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+   - The app allows users to book a chosen sports ground at their preferred time and date.
+   - Partner sports centers will have their databases updated with new reservations.
 
-## Get a fresh project
+2. **Integrated Map**
 
-When you're ready, run:
+   - The map provides information such as current attendance, number of available fields, and friends on site.
+   - Additionally, it gives important information to users (e.g., opening hours, reservation prices).
 
-```bash
-npm run reset-project
-```
+3. **User Contacts and Friends**
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+   - The app aims to create thriving communities of players and facilitate last-minute bookings for close friends.
+   - Sports centers can host events and notify their regular users.
 
-## Learn more
+## Features
 
-To learn more about developing your project with Expo, look at the following resources:
+- **User-friendly Interface**: Easy navigation and booking process.
+- **Real-time Updates**: Instant updates on field availability and reservations.
+- **Community Building**: Connect with friends and other players.
+- **Event Notifications**: Stay informed about upcoming events at your favorite sports centers.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Contributing
 
-## Join the community
+Contributions are welcome! Please open an issue or submit a pull request.
 
-Join our community of developers creating universal apps.
+## License
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+This project is licensed under the MIT License.
