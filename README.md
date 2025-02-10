@@ -36,18 +36,3 @@ To start the app, run:
 
    - The app aims to create thriving communities of players and facilitate last-minute bookings for close friends.
    - Sports centers can host events and notify their regular users.
-
-## Features
-
-- **User-friendly Interface**: Easy navigation and booking process.
-- **Real-time Updates**: Instant updates on field availability and reservations.
-- **Community Building**: Connect with friends and other players.
-- **Event Notifications**: Stay informed about upcoming events at your favorite sports centers.
-
-## Contributing
-
-Contributions are welcome! Please open an issue or submit a pull request.
-
-## License
-
-This project is licensed under the MIT License.
