@@ -8,8 +8,19 @@ export const sportSchema = z.object({
 export type Sport = z.infer<typeof sportSchema>;
 
 export async function getSports() {
-    const res = await fetch("http://localhost:3000/api/sports");
-    return (await res.json()) as Sport[];
+    try {
+        const res = await fetch("http://localhost:3000/api/sports");
+        
+        if (!res.ok) {
+            console.error("Error fetching sports:", res.status);
+            return [];
+        }
+        
+        return (await res.json()) as Sport[];;
+    } catch (error) {
+        console.error("Error in getSports:", error);
+        return [];
+    }
 }
 
 export async function addSport(sport: Sport) {
@@ -28,7 +39,7 @@ export async function addSport(sport: Sport) {
     return (await res.json()) as Sport;
 }
 
-export async function deleteSport(id: string) {
+export async function removeSport(id: string) {
     const formData = new URLSearchParams();
     formData.append("id", String(id));
 

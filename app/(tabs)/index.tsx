@@ -1,101 +1,205 @@
-import React, { useState, useEffect } from 'react';
-import { Image, StyleSheet, View, FlatList } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
+import React, { useState, useEffect } from 'react'
+import { View, StyleSheet, ScrollView, ActivityIndicator } from 'react-native'
+import { Picker } from '@react-native-picker/picker'
+import { useQuery } from '@tanstack/react-query'
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-
-import { getSports, type Sport } from '@/lib/sports';
+import { ThemedView } from '@/components/ThemedView'
+import { ThemedText } from '@/components/ThemedText'
+import { getSports } from '@/lib/sports'
+import { getSportsCentersBySport } from '@/lib/sportsCenter'
+import { getReservationsByUser } from '@/lib/reservations'
+import { useAuth } from '@/lib/auth'
+import SportTable from '@/components/ui/SportTable'
+import ReservationsTable from '@/components/ui/ReservationsTable'
+import ReservationPopup from '@/components/ui/ReservationsPopup'
 
 export default function HomeScreen() {
-  const [sports, setSports] = useState<Sport[]>([]);
-  const [selectedSport, setSelectedSport] = useState<string>('');
+  const { user } = useAuth()
+  const [selectedSport, setSelectedSport] = useState("football")
+  const [error, setError] = useState<string | null>(null)
+  const [isPopupVisible, setIsPopupVisible] = useState(false)
+  const [selectedCenterId, setSelectedCenterId] = useState<number | null>(null)
+  
+  // Fetch sports data
+  const { 
+    data: sports, 
+    isLoading: sportsLoading 
+  } = useQuery({
+    queryKey: ['sports'],
+    queryFn: getSports
+  })
+  
+  // Fetch sports centers based on selected sport
+  const { 
+    data: sportsCenters, 
+    isLoading: centerLoading,
+    error: centerError
+  } = useQuery({
+    queryKey: ['sportsCenters', selectedSport],
+    queryFn: () => getSportsCentersBySport(selectedSport)
+  })
 
+  // Handle errors from the sports centers query
   useEffect(() => {
-    async function fetchSports() {
-      const sportsData = await getSports();
-      setSports(sportsData);
+    if (centerError) {
+      console.error("Query error:", centerError);
+      setError(`Failed to load sports centers: ${(centerError as Error).message}`);
     }
-    fetchSports();
-  }, []);
+  }, [centerError]);
+  
+  const { 
+    data: userReservations, 
+    isLoading: reservationsLoading 
+  } = useQuery({
+    queryKey: ['reservations', user?.id],
+    queryFn: () => getReservationsByUser(user?.id)
+  })
 
+  // Transform data for the sport table - safely handle non-array data
+  const sportsTableData = Array.isArray(sportsCenters) 
+    ? sportsCenters.map((center) => ({
+        id: center.id,
+        "Sports Center": center.name,
+        "Location": center.location,
+        "Opening Time": center.openingTime,
+        "Attendance": center.attendance.toString(),
+      })) 
+    : [];
+  
+  // Handle sports center selection
+  const handleSelectCenter = (centerId: number) => {
+    setSelectedCenterId(centerId);
+    setIsPopupVisible(true);
+  };
+  
+  // Close the popup
+  const handleClosePopup = () => {
+    setIsPopupVisible(false);
+    setSelectedCenterId(null);
+  };
+  
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <View style={styles.row}>
-          <ThemedText type="subtitle">Select a Sport</ThemedText>
-          <Picker
-            selectedValue={selectedSport}
-            onValueChange={(itemValue) => setSelectedSport(itemValue)}
-            style={styles.picker}
-          >
-            {sports.map((sport) => (
-              <Picker.Item key={sport.id} label={sport.name} value={sport.id} />
-            ))}
-          </Picker>
+    <ThemedView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <ThemedText type="title" style={styles.header}>Sports Centers</ThemedText>
+        
+        {/* Sport Selector */}
+        <View style={styles.selectorContainer}>
+          <ThemedText style={styles.label}>Sports Centers List</ThemedText>
+          <View style={styles.pickerContainer}>
+            <ThemedText style={styles.pickerLabel}>Select Sport:</ThemedText>
+            {sportsLoading ? (
+              <ActivityIndicator size="small" color="#0a7ea4" />
+            ) : (
+              <Picker
+                selectedValue={selectedSport}
+                onValueChange={(value) => setSelectedSport(value)}
+                style={styles.picker}
+                dropdownIconColor="#0a7ea4"
+              >
+                {sports?.map((sport) => (
+                  <Picker.Item key={sport.id} label={sport.name} value={sport.name} />
+                ))}
+              </Picker>
+            )}
+          </View>
         </View>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Sport Fields</ThemedText>
-        {/* <FlatList
-          data={sports.find(sport => sport.id === selectedSport)?.fields || []}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View style={styles.tableRow}>
-              <ThemedText>{item.name}</ThemedText>
-              <ThemedText>{item.location}</ThemedText>
-            </View>
-          )}
-        /> */}
-      </ThemedView>
-    </ParallaxScrollView>
-  );
+        
+        {/* Show errors if any */}
+        {error && (
+          <ThemedView style={styles.errorContainer}>
+            <ThemedText style={styles.errorText}>{error}</ThemedText>
+          </ThemedView>
+        )}
+        
+        {/* Sport Centers Table */}
+        {centerLoading ? (
+          <ActivityIndicator size="large" color="#0a7ea4" style={styles.loader} />
+        ) : (
+          <>
+            <ThemedText style={styles.tableHint}>Tap on a sports center to make a reservation</ThemedText>
+            <SportTable 
+              data={sportsTableData} 
+              onSelectCenter={handleSelectCenter}
+            />
+          </>
+        )}
+        
+        {/* Reservations Section */}
+        <ThemedText type="subtitle" style={styles.subHeader}>Reservations</ThemedText>
+        {reservationsLoading ? (
+          <ActivityIndicator size="large" color="#0a7ea4" style={styles.loader} />
+        ) : (
+          <ReservationsTable reservations={userReservations || []} />
+        )}
+        
+        {/* Reservation Popup */}
+        <ReservationPopup 
+          isVisible={isPopupVisible}
+          onClose={handleClosePopup}
+          sportsCenterId={selectedCenterId}
+        />
+      </ScrollView>
+    </ThemedView>
+  )
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flex: 1,
+  },
+  scrollContainer: {
+    padding: 16,
+  },
+  header: {
+    marginBottom: 16,
+  },
+  subHeader: {
+    marginTop: 24,
+    marginBottom: 16,
+  },
+  selectorContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  label: {
+    fontWeight: 'bold',
+  },
+  pickerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 4,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  pickerLabel: {
+    marginRight: 8,
+    fontSize: 14,
   },
   picker: {
-    height: 50,
-    width: '70%',
+    width: 150,
+    height: 40,
   },
-  tableRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+  loader: {
+    marginVertical: 20,
   },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  errorContainer: {
+    backgroundColor: '#ffebee',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
   },
-});
+  errorText: {
+    color: '#b71c1c',
+  },
+  tableHint: {
+    fontSize: 14,
+    fontStyle: 'italic',
+    color: '#666',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+})
