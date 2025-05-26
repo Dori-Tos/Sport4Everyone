@@ -3,15 +3,15 @@ import { View, StyleSheet, ScrollView, ActivityIndicator } from 'react-native'
 import { Picker } from '@react-native-picker/picker'
 import { useQuery } from '@tanstack/react-query'
 
-import { ThemedView } from '@/components/ThemedView'
-import { ThemedText } from '@/components/ThemedText'
+import { ThemedView } from '@/components/ui/ThemedView'
+import { ThemedText } from '@/components/ui/ThemedText'
 import { getSports } from '@/lib/sports'
 import { getSportsCentersBySport } from '@/lib/sportsCenter'
 import { getReservationsByUser } from '@/lib/reservations'
 import { useAuth } from '@/lib/auth'
-import SportTable from '@/components/ui/SportTable'
-import ReservationsTable from '@/components/ui/ReservationsTable'
-import ReservationPopup from '@/components/ui/ReservationsPopup'
+import SportTable from '@/components/pages/SportTable'
+import ReservationsTable from '@/components/pages/ReservationsTable'
+import ReservationPopup from '@/components/pages/ReservationsPopup'
 
 export default function HomeScreen() {
   const { user } = useAuth()
@@ -69,8 +69,14 @@ export default function HomeScreen() {
   // Handle sports center selection
   const handleSelectCenter = (centerId: number) => {
     setSelectedCenterId(centerId);
-    setIsPopupVisible(true);
-  };
+  }
+
+  // Wait for the selected center ID to be set before showing the popup
+  useEffect(() => {
+    if (selectedCenterId !== null) {
+      setIsPopupVisible(true);
+    }
+  }, [selectedCenterId])
   
   // Close the popup
   const handleClosePopup = () => {
@@ -137,7 +143,7 @@ export default function HomeScreen() {
         <ReservationPopup 
           isVisible={isPopupVisible}
           onClose={handleClosePopup}
-          sportsCenterId={selectedCenterId}
+          sportsCenterId={selectedCenterId ?? 0}
         />
       </ScrollView>
     </ThemedView>

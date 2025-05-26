@@ -1,8 +1,8 @@
 import React from 'react'
 import { View, StyleSheet, FlatList } from 'react-native'
 
-import { ThemedView } from '@/components/ThemedView'
-import { ThemedText } from '@/components/ThemedText'
+import { ThemedView } from '@/components/ui/ThemedView'
+import { ThemedText } from '@/components/ui/ThemedText'
 
 const formatDate = (dateString: string) => {
   if (!dateString) return "N/A"

@@ -40,21 +40,30 @@ export async function getSportFieldsBySportsCenter(sportsCenterId: Number) {
     }
 }
 
-export async function addSportField(sportField: SportField) {
-    sportField = sportFieldSchema.parse(sportField);
+export async function addSportField(sportField: SportField, sportsCenterId: number) {
+    try {
+        sportField = sportFieldSchema.parse(sportField);
 
-    const formData = new URLSearchParams();
-    formData.append("name", sportField.name);
-    formData.append("sports", JSON.stringify(sportField.sports));
-
-    const res = await fetch("http://localhost:3000/api/sportfields", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: formData.toString(),
-    });
-    return (await res.json()) as SportField;
+        const res = await fetch("http://localhost:3000/api/sportfields/post", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: JSON.stringify({
+                sportFieldName: sportField.name,
+                sportFieldSports: JSON.stringify(sportField.sports),
+                sportFieldPrice: String(sportField.price),
+                sportsCenterId: String(sportsCenterId),
+            }),
+        });
+        if (!res.ok) {
+            throw new Error(`Error adding sport field: ${res.statusText}`);
+        }
+        return (await res.json()) as SportField;
+    } catch (error) {
+        console.error("Error adding sport field:", error);
+        throw error;
+    }
 }
 
 export async function removeSportField(id: string) {

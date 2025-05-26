@@ -25,9 +25,18 @@ export const registerSchema = z.object({
   administrator: z.coerce.boolean().default(false),
 })
 
+export const updateUserSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  email: z.string().email(),
+  password: z.string().optional(), 
+  confirmPassword: z.string().optional(),
+})
+
 export type User = z.infer<typeof usersSchema>
 export type Login = z.infer<typeof loginSchema>
 export type Register = z.infer<typeof registerSchema>
+export type UpdateUser = z.infer<typeof updateUserSchema>
 
 export async function getUsers() {
   const res = await fetch('http://localhost:3000/api/users')
@@ -58,15 +67,20 @@ export async function loginUser(credentials: Login) {
       const error = await res.json();
       throw new Error(error.message || "Failed to login");
     }
+
+    const data = await res.json();
+    const sessionId = await data.mobileToken;
+    if (!sessionId) {
+      throw new Error('Session ID not found in response');
+    }
     
     const userData = await getUser();
-    console.log("User data after login:", userData);
-    return userData;
+    return [userData, sessionId];
   } catch (error) {
     console.error('Error logging in:', error)
     throw error
   }
-} 
+}
 
 export async function getUser() {
   try {
@@ -108,18 +122,26 @@ export async function removeUser(id: string) {
   return (await res.json()) as User
 }
 
-// export async function updateUser(user: User) {
-//   user = usersSchema.parse(user)
+export async function updateUser(user: UpdateUser, sessionId: string) {
+  try {
+    user = updateUserSchema.parse(user)
 
-//   const formData = new URLSearchParams()
-//   formData.append('name', user.name)
-//   formData.append('email', user.email)
-//   formData.append('password', user.password || '')
-//   formData.append('administrator', String(user.administrator))
+    const res = await fetch(`http://localhost:3000/api/users/updateUser`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-mobile-token': sessionId,
+      },
+      body: JSON.stringify(user),
+    })
+    if (!res.ok) {
+      const error = await res.json()
+      throw new Error(error.message || 'Failed to update user')
+    }
 
-//   const res = await fetch(`http://localhost:3000/api/users/${user.id}`, {
-//     method: 'PUT',
-//     body: formData,
-//   })
-//   return (await res.json()) as User
-// }
+    return (await res.json()) as User
+  } catch (error) {
+    console.error('Error updating user:', error)
+    throw error
+  }
+}

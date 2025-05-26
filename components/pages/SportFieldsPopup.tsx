@@ -3,8 +3,8 @@ import { View, StyleSheet, Modal, TouchableOpacity, FlatList, Platform } from 'r
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { useMutation } from '@tanstack/react-query'
 
-import { ThemedView } from '@/components/ThemedView'
-import { ThemedText } from '@/components/ThemedText'
+import { ThemedView } from '@/components/ui/ThemedView'
+import { ThemedText } from '@/components/ui/ThemedText'
 import { useAuth } from '@/lib/auth'
 import { addReservation } from '@/lib/reservations'
 import { SportFieldsItem } from '@/components/typing/Items'

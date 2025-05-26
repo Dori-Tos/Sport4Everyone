@@ -1,6 +1,4 @@
 import { z } from "zod";
-import { getSports, Sport } from "./sports";
-import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
 
 export const newSportsCenterSchema = z.object({
     name: z.string(),
@@ -21,20 +19,35 @@ export const newSportFieldSchema = z.object({
     sportsCenterId: z.coerce.number(),
 })
 
+export const userSportsCenterSchema = z.object({
+    id: z.coerce.number(),
+    name: z.string(),
+    location: z.string(),
+    attendance: z.coerce.number(),
+    openingTime: z.string(),
+    sportFields: z.array(z.coerce.number()),
+});
+
 export type SportsCenter = z.infer<typeof sportsCenterSchema>;
 export type NewSportsCenter = z.infer<typeof newSportsCenterSchema>;
-export type NewSportField = z.infer<typeof newSportFieldSchema>;
+export type NewSportField = z.infer<typeof newSportFieldSchema>
+export type UserSportsCenter = z.infer<typeof userSportsCenterSchema>;
 
 export async function getSportsCenters() {
     const res = await fetch("http://localhost:3000/api/sportscenters");
     return (await res.json()) as SportsCenter[];
 }
 
-export async function getSportsCenter(id: string) {
-    const res = await fetch(`http://localhost:3000/api/sportscenters/${id}`);
-    return (await res.json()) as SportsCenter;
+export async function getSportsCenter(id: number) {
+    const res = await fetch(`http://localhost:3000/api/sportscenters/getSportsCenter`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: id }),
+    })
+    return (await res.json());
 }
-
 
 export async function getSportsCentersBySport(sportName: string) {
     try {
@@ -52,12 +65,23 @@ export async function getSportsCentersBySport(sportName: string) {
     }
 }
 
-export async function getSportsCentersByUserId(userId: string) {
-    const users = await fetch("http://localhost:3000/api/users");
-    const usersData = await users.json();
-    const user = usersData.find((user: { id: string }) => user.id === userId);
-    const res = user?.sportsCenters
-    return (await res.json()) as SportsCenter[];
+export async function getSportsCentersByUserId(userId: number) {
+    try {
+        const res = await fetch(`http://localhost:3000/api/sportscenters/getByUserId`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ userId: userId }),
+        })
+        if (!res.ok) {
+            throw new Error(`Error fetching sports centers: ${res.statusText}, Status Code: ${res.status}, Response: ${await res.text()}`);
+        }
+        return (await res.json()) as UserSportsCenter[];
+    } catch (error) {
+        console.error("Error fetching sports centers by user ID:", error);
+        throw error;
+    }
 }
 
 export async function addSportsCenter(sportsCenter: NewSportsCenter) {
@@ -114,7 +138,7 @@ export async function addSportFieldToSportsCenter(sportField: NewSportField) {
         },
         body: formData.toString(),
     });
-    const sportsCenter = await getSportsCenter(sportField.sportsCenterId.toString());
+    const sportsCenter = await getSportsCenter(sportField.sportsCenterId);
     const updatedSportFields = sportsCenter.sportFields.concat(sportField.sportFieldSports);
     const updatedSportsCenter = { ...sportsCenter, sportFields: updatedSportFields };
     const res = updateSportsCenter(updatedSportsCenter);

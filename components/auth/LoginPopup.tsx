@@ -28,9 +28,7 @@ function LoginPopup({ onSwitchToSignUp }: LoginPopupProps) {
         email, 
         password 
       }, {
-        onSuccess: () => {
-          console.log("Login success callback triggered");
-        },
+        onSuccess: () => {},
         onError: (err) => {
           console.error("Login error:", err);
           setError("Login failed. Please check your credentials.");
@@ -40,7 +38,6 @@ function LoginPopup({ onSwitchToSignUp }: LoginPopupProps) {
         }
       });
       
-      console.log("Login submitted");
     } catch (error) {
       console.error("Login submission error", error);
       setError("Login failed. Please check your credentials.");

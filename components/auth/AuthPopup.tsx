@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { View } from 'react-native'
 import LoginPopup from './LoginPopup'
 import RegisterPopup from './RegisterPopup'
-import { ThemedView } from '@/components/ThemedView'
+import { ThemedView } from '@/components/ui/ThemedView'
 
 export default function AuthPopup() {
   const [showLogin, setShowLogin] = useState(true)

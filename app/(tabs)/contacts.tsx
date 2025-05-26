@@ -2,8 +2,8 @@ import React, { useState } from 'react'
 import { View, StyleSheet, ScrollView, ActivityIndicator, TextInput, TouchableOpacity } from 'react-native'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 
-import { ThemedView } from '@/components/ThemedView'
-import { ThemedText } from '@/components/ThemedText'
+import { ThemedView } from '@/components/ui/ThemedView'
+import { ThemedText } from '@/components/ui/ThemedText'
 import { useAuth } from '@/lib/auth'
 import { getContactsByUser, addContact, removeContact, searchContacts } from '@/lib/contacts'
   
@@ -34,7 +34,8 @@ export default function ContactsScreen() {
 
   // Remove contact mutation
   const { mutate: removeContactMutate, isPending: isRemovingContact } = useMutation({
-    mutationFn: (id: string) => removeContact(id),
+    mutationFn: ({ userId, contactId }: { userId: number, contactId: number }) => 
+      removeContact(userId, contactId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contacts', user?.id] })
     },
@@ -60,16 +61,20 @@ export default function ContactsScreen() {
     
     searchTimeout = setTimeout(async () => {
       try {
-        const data = await searchContacts(value)
+        const data = await searchContacts(value, user?.id)
+        
+        // Ensure data is an array before filtering
+        const dataArray = Array.isArray(data) ? data : [];
         
         // Filter out the current user and existing contacts
-        setSearchResults(data.filter((currentUser: any) => 
+        setSearchResults(dataArray.filter((currentUser: any) => 
           currentUser.id !== user?.id && 
           !userContacts?.some((contact: any) => contact.contactId === currentUser.id)
         ))
       } catch (err) {
         console.error("Search error:", err)
         setError("Failed to search users")
+        setSearchResults([])
       } finally {
         setIsSearching(false)
       }
@@ -88,7 +93,10 @@ export default function ContactsScreen() {
   const handleRemoveContact = (contactId: number) => {
     if (!user?.id) return
     
-    removeContactMutate(`${user.id}-${contactId}`)
+    removeContactMutate({ 
+      userId: user.id, 
+      contactId 
+    })
   }
 
   return (
@@ -119,7 +127,7 @@ export default function ContactsScreen() {
           {searchResults.length > 0 ? (
             <ThemedView style={styles.resultsContainer}>
               {searchResults.map((contact) => (
-                <ThemedView key={contact.id} style={styles.resultItem}>
+                <ThemedView key={`search-${contact.id}`} style={styles.resultItem}>
                   <View>
                     <ThemedText style={styles.contactName}>{contact.name}</ThemedText>
                     <ThemedText style={styles.contactEmail}>{contact.email}</ThemedText>
@@ -149,7 +157,7 @@ export default function ContactsScreen() {
         ) : userContacts && userContacts.length > 0 ? (
           <ThemedView style={styles.contactsContainer}>
             {userContacts.map((contact: any) => (
-              <ThemedView key={contact.id} style={styles.contactItem}>
+              <ThemedView key={`contact-${contact.id || contact.contactId}`} style={styles.contactItem}>
                 <View>
                   <ThemedText style={styles.contactName}>
                     {contact.contact?.name || "Unknown Contact"}

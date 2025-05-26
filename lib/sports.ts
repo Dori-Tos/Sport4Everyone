@@ -23,6 +23,28 @@ export async function getSports() {
     }
 }
 
+export async function getSport(id: number) {
+    try {
+        const res = await fetch(`http://localhost:3000/api/sports/getSport`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ id: id }),
+        });
+        
+        if (!res.ok) {
+            console.error("Error fetching sport:", res.status);
+            return null;
+        }
+        
+        return (await res.json()) as Sport;
+    } catch (error) {
+        console.error("Error in getSport:", error);
+        return null;
+    }
+}
+
 export async function addSport(sport: Sport) {
     sport = sportSchema.parse(sport);
 

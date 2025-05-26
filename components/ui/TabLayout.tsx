@@ -2,7 +2,7 @@ import { Tabs } from 'expo-router'
 import React from 'react'
 import { Platform } from 'react-native'
 
-import { HapticTab } from '@/components/HapticTab'
+import { HapticTab } from '@/components/ui/HapticTab'
 import { IconSymbol } from '@/components/ui/IconSymbol'
 import TabBarBackground from '@/components/ui/TabBarBackground'
 import { Colors } from '@/constants/Colors'
@@ -39,13 +39,6 @@ export default function TabLayout() {
         options={{
           title: 'Contacts',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="people" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person" color={color} />,
         }}
       />
       <Tabs.Screen

@@ -16,6 +16,7 @@ const MAPPING = {
   'people': 'people',
   'person': 'person',
   'location.fill': 'location-on',
+  'sportscourt': 'sports-soccer',
   
 } as Partial<
   Record<

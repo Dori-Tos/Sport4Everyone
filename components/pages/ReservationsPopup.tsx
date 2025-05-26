@@ -1,79 +1,90 @@
-import React, { useEffect, useState } from 'react';
-import { Modal, View, StyleSheet, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { Picker } from '@react-native-picker/picker';
-import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import React, { useEffect, useMemo, useState } from 'react'
+import { Modal, View, StyleSheet, TouchableOpacity, ActivityIndicator, Platform } from 'react-native'
+import DateTimePicker from '@react-native-community/datetimepicker'
+import { Picker } from '@react-native-picker/picker'
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query'
 
-import { ThemedView } from '@/components/ThemedView';
-import { ThemedText } from '@/components/ThemedText';
-import { addReservation } from '@/lib/reservations';
-import { getSportsCenters, getSportsCenter } from '@/lib/sportsCenter';
-import { useAuth } from '@/lib/auth';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
-import { getSportFieldsBySportsCenter } from '@/lib/sportFields';
-import { IconSymbol } from './IconSymbol';
+import { ThemedView } from '@/components/ui/ThemedView'
+import { ThemedText } from '@/components/ui/ThemedText'
+import { addReservation } from '@/lib/reservations'
+import { getSportsCenter } from '@/lib/sportsCenter'
+import { useAuth } from '@/lib/auth'
+import { Colors } from '@/constants/Colors'
+import { useColorScheme } from '@/hooks/useColorScheme'
+import { getSportFieldsBySportsCenter } from '@/lib/sportFields'
+import { IconSymbol } from '../ui/IconSymbol'
+import { set } from 'zod'
 
 type ReservationPopupProps = {
-  isVisible: boolean;
-  onClose: () => void;
-  sportsCenterId?: number | null;
-};
+  isVisible: boolean
+  onClose: () => void
+  sportsCenterId: number
+}
 
-export default function ReservationPopup({ isVisible, onClose }: ReservationPopupProps) {
+export default function ReservationPopup({ isVisible, onClose, sportsCenterId }: ReservationPopupProps) {
   const { user } = useAuth();
   const colorScheme = useColorScheme() ?? 'light';
   const queryClient = useQueryClient();
   
   // Form state
-  const [selectedCenterId, setSelectedCenterId] = useState<number | null>(null);
-  const [sportFieldId, setSportFieldId] = useState<number | null>(null);
+  const [selectedCenterId, setSelectedCenterId] = useState<number>(sportsCenterId);
+  const [sportFieldId, setSportFieldId] = useState<number>(-1);
   const [date, setDate] = useState(new Date());
   const [duration, setDuration] = useState(1); // hours
+  const [estimatedPrice, setEstimatedPrice] = useState<number>(0);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Set the selected center when the sportsCenterId prop changes
   useEffect(() => {
-    if (selectedCenterId) {
-      setSelectedCenterId(selectedCenterId);
-    } else {
-      setSelectedCenterId(null);
+    if (sportsCenterId) {
+      setSelectedCenterId(sportsCenterId)
     }
-  }, [selectedCenterId]);
+  }, [sportsCenterId]);
 
   // Fetch sports center details when a center is selected
   const { data: selectedCenter, isLoading: centerDetailsLoading } = useQuery({
-    queryKey: ['sportsCenter', selectedCenterId],
-    queryFn: () => selectedCenterId ? getSportsCenter(selectedCenterId.toString()) : null,
+    queryKey: ['getSportsCenter'],
+    queryFn: () => selectedCenterId ? getSportsCenter(selectedCenterId) : null,
     enabled: !!selectedCenterId,
-  });
+  })
 
   const { data: selectedSportFields, isLoading: sportFieldsLoading } = useQuery({
-    queryKey: ['sportFields', selectedCenterId],
+    queryKey: ['GetSportFields'],
     queryFn: () => selectedCenterId ? getSportFieldsBySportsCenter(selectedCenterId) : null,
     enabled: !!selectedCenterId,
   })
-  // Calculate estimated price
-  const estimatedPrice = selectedSportFields?.find(
-    field => field.id === sportFieldId
-  )?.price * duration || 0;
 
-  // Create reservation mutation
+  // When estimated is called, it will calculate the estimated price based on the selected sport field and duration
+  useEffect(() => {    
+    if (!selectedSportFields || sportFieldId === -1) {
+      setEstimatedPrice(0)
+      return;
+    }
+  
+    const fieldIdNumber = Number(sportFieldId)
+    const selectedField = selectedSportFields.find(field => Number(field.id) === fieldIdNumber)
+    
+    const fieldPrice = selectedField?.price || 0
+    
+    const calculatedPrice = fieldPrice * duration
+    
+    setEstimatedPrice(calculatedPrice)
+  }, [sportFieldId, duration, selectedSportFields])
+
   const { mutate: createReservation, isPending } = useMutation({
     mutationFn: addReservation,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['reservations'] });
-      onClose();
+      queryClient.invalidateQueries({ queryKey: ['GetReservations'] })
+      onClose()
     },
     onError: (error) => {
-      setError(`Failed to create reservation: ${error.message}`);
+      setError(`Failed to create reservation: ${error.message}`)
     }
-  });
+  })
 
   // Handle form submission
   const handleSubmit = () => {
-    if (!user?.id || !selectedCenterId || !sportFieldId) {
+    if (!user?.id || !selectedCenterId || sportFieldId === -1) {
       setError('Please complete all required fields');
       return;
     }
@@ -137,10 +148,10 @@ export default function ReservationPopup({ isVisible, onClose }: ReservationPopu
                 <View style={styles.pickerContainer}>
                   <Picker
                     selectedValue={sportFieldId}
-                    onValueChange={setSportFieldId}
+                    onValueChange={(value) => setSportFieldId(value)}
                     style={styles.picker}
                   >
-                    <Picker.Item label="Select a sport field" value={null} />
+                    <Picker.Item label="Select a sport field" value={-1} /> 
                     {selectedSportFields?.map((field) => (
                       <Picker.Item key={field.id} label={field.name} value={field.id} />
                     ))}
@@ -193,7 +204,9 @@ export default function ReservationPopup({ isVisible, onClose }: ReservationPopu
           {sportFieldId && (
             <ThemedView style={styles.formGroup}>
               <ThemedText style={styles.label}>Estimated Price:</ThemedText>
-              <ThemedText style={styles.price}>${estimatedPrice.toFixed(2)}</ThemedText>
+              <ThemedText style={styles.price}>
+                ${estimatedPrice.toFixed(2)}
+              </ThemedText>
             </ThemedView>
           )}
           
@@ -218,10 +231,10 @@ export default function ReservationPopup({ isVisible, onClose }: ReservationPopu
               style={[
                 styles.button, 
                 styles.submitButton,
-                (!selectedCenterId || !sportFieldId) && styles.disabledButton
+                (!selectedCenterId || sportFieldId === -1) && styles.disabledButton
               ]}
               onPress={handleSubmit}
-              disabled={!selectedCenterId || !sportFieldId || isPending}
+              disabled={!selectedCenterId || sportFieldId === -1 || isPending}
             >
               {isPending ? (
                 <ActivityIndicator size="small" color="#fff" />

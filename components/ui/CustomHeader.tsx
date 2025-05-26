@@ -3,7 +3,8 @@ import { useNavigation } from '@react-navigation/native'
 import { IconSymbol } from './IconSymbol'
 import { Colors } from '@/constants/Colors'
 import { useColorScheme } from '@/hooks/useColorScheme'
-import { ThemedText } from '@/components/ThemedText'
+import { ThemedText } from '@/components/ui/ThemedText'
+import { router } from 'expo-router'
 
 type CustomHeaderProps = {
   showProfileButton?: boolean
@@ -29,9 +30,12 @@ export default function CustomHeader({
       )}
       
       {showProfileButton && (
-        <TouchableOpacity onPress={() => navigation.navigate('account')} style={styles.accountButton}>
-          <IconSymbol name="person" size={28} color={Colors[colorScheme ?? 'light'].tint} />
-        </TouchableOpacity>
+          <TouchableOpacity 
+            onPress={() => router.push('/account')} // Updated to router.push
+            style={styles.accountButton}
+          >
+            <IconSymbol name="person" size={28} color={Colors[colorScheme ?? 'light'].tint} />
+          </TouchableOpacity>
       )}
     </View>
   )

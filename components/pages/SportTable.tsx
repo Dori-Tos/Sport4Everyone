@@ -1,11 +1,12 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { ThemedText } from '@/components/ui/ThemedText';
+import { ThemedView } from '@/components/ui/ThemedView';
+import { SportsCenterItem } from '../typing/Items';
 
 type SportTableProps = {
-  data: Array<Record<string, any>>;
-  onSelectCenter?: (centerId: number) => void;
+  data: Array<SportsCenterItem>;
+  onSelectCenter: (centerId: number) => void;
 };
 
 export default function SportTable({ data, onSelectCenter }: SportTableProps) {
@@ -19,6 +20,15 @@ export default function SportTable({ data, onSelectCenter }: SportTableProps) {
 
   // Extract headers from the first item
   const headers = Object.keys(data[0]).filter(key => key !== 'id');
+  
+  // Debug function to handle center selection
+  const handleCenterPress = (item: SportsCenterItem) => {
+    if (onSelectCenter) {
+      onSelectCenter(item.id);
+    } else {
+      console.warn('onSelectCenter prop is not defined');
+    }
+  };
 
   return (
     <ThemedView style={styles.container}>
@@ -34,16 +44,16 @@ export default function SportTable({ data, onSelectCenter }: SportTableProps) {
           </View>
           
           {/* Table Rows */}
-          {data.map((item, rowIndex) => (
+          {data.map((sportsCenter) => (
             <TouchableOpacity 
-              key={rowIndex} 
+              key={sportsCenter.id} 
               style={styles.dataRow}
-              onPress={() => onSelectCenter && onSelectCenter(item.id)}
+              onPress={() => onSelectCenter(sportsCenter.id)}
               activeOpacity={0.7}
             >
               {headers.map((header, colIndex) => (
                 <ThemedView key={colIndex} style={styles.dataCell}>
-                  <ThemedText>{item[header]}</ThemedText>
+                  <ThemedText>{sportsCenter[header]}</ThemedText>
                 </ThemedView>
               ))}
             </TouchableOpacity>
